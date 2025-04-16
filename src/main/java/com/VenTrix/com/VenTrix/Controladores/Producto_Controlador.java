@@ -23,7 +23,7 @@ import java.util.List;
 @RequestMapping("/producto")
 public class Producto_Controlador {
 
-    private static final String DIRECTORIO_IMAGENES = "src/main/resources/imagenes/productos/";
+    private static final String DIRECTORIO_IMAGENES = "/app/imagenes/productos/";
 
     @Autowired
     private Producto_Servicio servicio;

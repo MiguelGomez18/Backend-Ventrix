@@ -22,7 +22,7 @@ import java.util.List;
 public class Restaurante_Controlador {
 
     // Aquí se definiran las rutas para los endpoints del restaurantes
-    private static final String DIRECTORIO_IMAGENES = "src/main/resources/imagenes/restaurantes/";
+    private static final String DIRECTORIO_IMAGENES = "/app/imagenes/restaurantes/";
 
     @Autowired
     private Restaurante_Servicio servicio;
