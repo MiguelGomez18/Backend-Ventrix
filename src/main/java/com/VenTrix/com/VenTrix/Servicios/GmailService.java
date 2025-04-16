@@ -23,6 +23,9 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
@@ -80,30 +83,51 @@ public class GmailService {
     }
 
     private Gmail getGmailService() throws IOException, GeneralSecurityException {
+        // Leer client_secret desde variable de entorno
         String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
         if (secretJson == null) {
-            throw new IllegalStateException("La variable de entorno GOOGLE_CLIENT_SECRET no está definida");
+            throw new IllegalStateException("La variable GOOGLE_CLIENT_SECRET no está definida");
         }
 
         InputStream in = new ByteArrayInputStream(secretJson.getBytes(StandardCharsets.UTF_8));
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
+        // Restaurar token desde variable si no existe el archivo
+        Path tokensPath = Paths.get(TOKENS_DIRECTORY_PATH);
+        Path credentialFile = tokensPath.resolve("StoredCredential");
+
+        if (!Files.exists(credentialFile)) {
+            String storedCredentialBase64 = System.getenv("GOOGLE_STORED_CREDENTIAL_B64");
+            if (storedCredentialBase64 == null) {
+                throw new IllegalStateException("La variable GOOGLE_STORED_CREDENTIAL_B64 no está definida y no existe el token en disco");
+            }
+            Files.createDirectories(tokensPath);
+            byte[] decoded = Base64.getDecoder().decode(storedCredentialBase64);
+            Files.write(credentialFile, decoded);
+        }
+
+        // Crear flujo OAuth con el token restaurado
         var flow = new GoogleAuthorizationCodeFlow.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
                 JSON_FACTORY,
                 clientSecrets,
                 SCOPES
-        ).setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
+        ).setDataStoreFactory(new FileDataStoreFactory(tokensPath.toFile()))
                 .setAccessType("offline")
                 .build();
 
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        var credential = new com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+        // Cargar credencial
+        var credential = flow.loadCredential("user");
+        if (credential == null) {
+            throw new IllegalStateException("No se pudo cargar la credencial desde el token almacenado");
+        }
 
+        // Construir el servicio de Gmail
         return new Gmail.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
     }
+
 
     private Message createMessageWithEmail(MimeMessage emailContent) throws MessagingException, IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
