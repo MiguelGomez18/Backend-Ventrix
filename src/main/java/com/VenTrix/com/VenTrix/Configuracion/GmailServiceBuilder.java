@@ -31,8 +31,8 @@ public class GmailServiceBuilder {
     private static final String STORED_CREDENTIAL_FILENAME = "StoredCredential";
 
     public static Gmail getGmailService() throws Exception {
-        String secretJson = System.getProperty("GOOGLE_CLIENT_SECRET");
-        System.out.println(secretJson);
+        String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
+        System.out.println("Desde getenv: " + secretJson);
         if (secretJson == null) {
             throw new IllegalStateException("La variable GOOGLE_CLIENT_SECRET no está definida");
         }

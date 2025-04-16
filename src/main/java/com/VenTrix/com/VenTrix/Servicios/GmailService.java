@@ -84,8 +84,8 @@ public class GmailService {
 
     private Gmail getGmailService() throws IOException, GeneralSecurityException {
         // Leer client_secret desde variable de entorno
-        String secretJson = System.getProperty("GOOGLE_CLIENT_SECRET");
-        System.out.println(secretJson);
+        String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
+        System.out.println("Desde getenv: " + secretJson);
         if (secretJson == null) {
             throw new IllegalStateException("La variable GOOGLE_CLIENT_SECRET no está definida");
         }
