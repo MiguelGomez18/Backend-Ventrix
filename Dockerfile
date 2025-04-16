@@ -1,21 +1,29 @@
-# Etapa de construcción
+# Etapa de construcción: Maven + Java 21
 FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
-WORKDIR /app
-COPY . .
-RUN ./mvnw clean package -DskipTests
-
-# Etapa final
-FROM eclipse-temurin:21-jdk
-
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copiamos el .jar generado
-COPY --from=builder /app/target/*.jar app.jar
+# Copia los archivos del proyecto
+COPY pom.xml .
+COPY src/ src/
 
-# Solo la carpeta de tokens (para uso local)
+# Compila el proyecto sin ejecutar los tests
+RUN mvn clean package -DskipTests
+
+# Etapa de ejecución: Java 21
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+# Copia el JAR compilado desde la etapa de construcción
+COPY --from=builder /app/target/VenTrix-0.0.1-SNAPSHOT.jar app.jar
+
+# Crea directorio para tokens (si lo necesitas)
 RUN mkdir -p /app/tokens
 
+# Expone el puerto que usará tu aplicación
 EXPOSE 8890
 
+# Comando de inicio
 ENTRYPOINT ["java", "-jar", "app.jar"]
