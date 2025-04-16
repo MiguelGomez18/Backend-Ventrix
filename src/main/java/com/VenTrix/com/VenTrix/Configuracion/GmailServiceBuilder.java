@@ -22,7 +22,7 @@ public class GmailServiceBuilder {
 
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final List<String> SCOPES = List.of(GmailScopes.GMAIL_SEND);
-    private static final String TOKENS_DIRECTORY_PATH = "/app/tokens/";
+    private static final String TOKENS_DIRECTORY_PATH = "/app/tokens";
 
     public static Gmail getGmailService() throws Exception {
         InputStream in = new FileInputStream("src/main/resources/client_secret_391823749122-a79u3no4p5nq91dmtgbng6hbsu7pe6vt.apps.googleusercontent.com.json");

@@ -35,7 +35,7 @@ public class GmailService {
     private static final String APPLICATION_NAME = "VenTrix";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final List<String> SCOPES = List.of(GmailScopes.GMAIL_SEND);
-    private static final String TOKENS_DIRECTORY_PATH = "/app/tokens/";
+    private static final String TOKENS_DIRECTORY_PATH = "/app/tokens";
 
     public void sendEmail(String to) throws Exception {
 
