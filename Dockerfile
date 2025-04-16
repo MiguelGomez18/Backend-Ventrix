@@ -19,6 +19,9 @@ WORKDIR /app
 # Copia el JAR compilado desde la etapa de construcción
 COPY --from=builder /app/target/VenTrix-0.0.1-SNAPSHOT.jar app.jar
 
+# Copiar las imágenes iniciales al contenedor
+COPY imagenes /app/imagenes
+
 # Crea directorio para tokens (si lo necesitas)
 RUN mkdir -p /app/tokens
 
