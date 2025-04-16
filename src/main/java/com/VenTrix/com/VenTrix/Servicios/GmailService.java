@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.List;
@@ -79,9 +80,12 @@ public class GmailService {
     }
 
     private Gmail getGmailService() throws IOException, GeneralSecurityException {
-        InputStream in = getClass().getClassLoader().getResourceAsStream("client_secret_391823749122-a79u3no4p5nq91dmtgbng6hbsu7pe6vt.apps.googleusercontent.com.json");
-        if (in == null) throw new FileNotFoundException("No se encontró el archivo credentials.json");
+        String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
+        if (secretJson == null) {
+            throw new IllegalStateException("La variable de entorno GOOGLE_CLIENT_SECRET no está definida");
+        }
 
+        InputStream in = new ByteArrayInputStream(secretJson.getBytes(StandardCharsets.UTF_8));
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         var flow = new GoogleAuthorizationCodeFlow.Builder(

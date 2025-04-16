@@ -12,9 +12,11 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class GmailServiceBuilder {
@@ -25,7 +27,8 @@ public class GmailServiceBuilder {
     private static final String TOKENS_DIRECTORY_PATH = "/app/tokens";
 
     public static Gmail getGmailService() throws Exception {
-        InputStream in = new FileInputStream("src/main/resources/client_secret_391823749122-a79u3no4p5nq91dmtgbng6hbsu7pe6vt.apps.googleusercontent.com.json");
+        String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
+        InputStream in = new ByteArrayInputStream(secretJson.getBytes(StandardCharsets.UTF_8));
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
