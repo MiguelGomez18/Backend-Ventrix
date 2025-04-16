@@ -32,10 +32,11 @@ public class GmailServiceBuilder {
 
     public static Gmail getGmailService() throws Exception {
         String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
+        System.out.println(secretJson);
         if (secretJson == null) {
             throw new IllegalStateException("La variable GOOGLE_CLIENT_SECRET no está definida");
         }
-        System.out.println(secretJson);
+        
         InputStream in = new ByteArrayInputStream(secretJson.getBytes(StandardCharsets.UTF_8));
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
