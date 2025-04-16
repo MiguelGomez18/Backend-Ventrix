@@ -19,7 +19,6 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // Permitir solicitudes a todas las rutas
 <<<<<<< HEAD
-                .allowedOrigins("http://localhost:5173","http://localhost:8081") // Permitir solicitudes desde el frontend en localhost
 =======
                 .allowedOrigins("http://localhost:5173", "http://localhost:8081") // Permitir solicitudes desde el frontend en localhost
 >>>>>>> f6a82c44d3e060f654ac120042ceb3c948199a23
