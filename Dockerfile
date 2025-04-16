@@ -28,4 +28,4 @@ COPY imagenes /app/imagenes
 EXPOSE 8890
 
 # Comando de inicio
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -DGOOGLE_CLIENT_SECRET=\"$GOOGLE_CLIENT_SECRET\" -jar app.jar"]
