@@ -32,14 +32,20 @@ public class GmailServiceBuilder {
         }
 
         String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
-        System.out.println(secretJson);
-        if (secretJson == null) {
-            throw new IllegalStateException("Variable GOOGLE_CLIENT_SECRET no configurada");
+        System.out.println("JSON recibido: " + secretJson); // Para depuración
+        
+        // Convertir formato web a installed si es necesario
+        if (secretJson != null && secretJson.contains("\"web\"")) {
+            secretJson = secretJson.replace("\"web\"", "\"installed\"");
+            System.out.println("JSON modificado: " + secretJson);
         }
-
+        
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
                 new InputStreamReader(new ByteArrayInputStream(secretJson.getBytes(StandardCharsets.UTF_8))));
 
+        System.out.println("Client ID: " + clientSecrets.getDetails().getClientId());
+        System.out.println("Client Secret: " + clientSecrets.getDetails().getClientSecret());
+        System.out.println("Redirect URIs: " + clientSecrets.getDetails().getRedirectUris());
         // 3. Configurar flujo de autorización
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
