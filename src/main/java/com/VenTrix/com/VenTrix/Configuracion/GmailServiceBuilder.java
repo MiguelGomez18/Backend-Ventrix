@@ -58,7 +58,7 @@ public class GmailServiceBuilder {
 
         // 4. Cargar credenciales existentes
         Credential credential = flow.loadCredential(USER_IDENTIFIER);
-        System.out.println(credential);
+        System.out.println("credenciales "+credential);
 
         if (credential == null || credential.getRefreshToken() == null) {
             throw new IllegalStateException("No hay credenciales válidas. Autoriza primero via /api/email/Callback");
