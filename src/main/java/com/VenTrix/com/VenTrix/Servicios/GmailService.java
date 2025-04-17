@@ -75,7 +75,7 @@ public class GmailService {
         message.setContent(cuerpoHtml, "text/html; charset=utf-8");
 
         Message gmailMessage = createMessageWithEmail(message);
-        service.users().messages().send("me", gmailMessage).execute();
+        service.users().messages().send("mg800487@gmail.com", gmailMessage).execute();
     }
 
     public Gmail getGmailService() throws IOException, GeneralSecurityException {

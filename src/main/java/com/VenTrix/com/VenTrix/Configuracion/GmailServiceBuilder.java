@@ -31,8 +31,8 @@ public class GmailServiceBuilder {
             }
         }
 
-        // 2. Cargar client secrets
         String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
+        System.out.println(secretJson);
         if (secretJson == null) {
             throw new IllegalStateException("Variable GOOGLE_CLIENT_SECRET no configurada");
         }
@@ -52,6 +52,7 @@ public class GmailServiceBuilder {
 
         // 4. Cargar credenciales existentes
         Credential credential = flow.loadCredential(USER_IDENTIFIER);
+        System.out.println(credential);
 
         if (credential == null || credential.getRefreshToken() == null) {
             throw new IllegalStateException("No hay credenciales válidas. Autoriza primero via /api/email/Callback");
