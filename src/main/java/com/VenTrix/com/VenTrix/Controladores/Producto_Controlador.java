@@ -1,5 +1,6 @@
 package com.VenTrix.com.VenTrix.Controladores;
 
+import com.VenTrix.com.VenTrix.Entidades.Activo;
 import com.VenTrix.com.VenTrix.Entidades.Categoria;
 import com.VenTrix.com.VenTrix.Entidades.Producto;
 import com.VenTrix.com.VenTrix.Entidades.Sucursal;
@@ -42,7 +43,8 @@ public class Producto_Controlador {
             @RequestParam("disponibilidad") boolean disponibilidad,
             @RequestParam("id_categoria") int categoriaId,
             @RequestParam("id_sucursal") String id_sucursal,
-            @RequestParam("imagen") MultipartFile imagen) {
+            @RequestParam("imagen") MultipartFile imagen,
+            @RequestParam("activo") Activo activo) {
 
         try {
             String nombreArchivo = "h";
@@ -57,6 +59,7 @@ public class Producto_Controlador {
             producto.setSucursal(sucursal);
             producto.setImagen(nombreArchivo);
             producto.setCategoria(categoria);
+            producto.setActivo(activo);
 
             Producto nuevoProducto = servicio.guardarProducto(producto);
             if (!imagen.isEmpty()) {
