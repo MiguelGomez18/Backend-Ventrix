@@ -1,72 +1,108 @@
 package com.VenTrix.com.VenTrix.Configuracion;
 
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
-import com.google.api.services.gmail.GmailScopes;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.List;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 
 public class GmailServiceBuilder {
     private static final String APPLICATION_NAME = "VenTrix";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private static final List<String> SCOPES = List.of(GmailScopes.GMAIL_SEND);
     private static final String TOKENS_DIRECTORY_PATH = "/app/tokens";
-    private static final String STORED_CREDENTIAL_FILENAME = "StoredCredential";
+    private static final String USER_IDENTIFIER = "ventrix-user";
+    private static final String GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.send";
 
-    public static Gmail getGmailService() throws Exception {
-        String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
-        System.out.println("Desde getenv: " + secretJson);
-        if (secretJson == null) {
-            throw new IllegalStateException("La variable GOOGLE_CLIENT_SECRET no está definida");
-        }
-        
-        InputStream in = new ByteArrayInputStream(secretJson.getBytes(StandardCharsets.UTF_8));
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
-
-        Path tokensPath = Paths.get(TOKENS_DIRECTORY_PATH);
-        Path credentialFile = tokensPath.resolve(STORED_CREDENTIAL_FILENAME);
-
-        if (!Files.exists(credentialFile)) {
-            String storedCredentialBase64 = System.getenv("GOOGLE_STORED_CREDENTIAL_B64");
-            if (storedCredentialBase64 == null) {
-                throw new IllegalStateException("La variable GOOGLE_STORED_CREDENTIAL_B64 no está definida y no existe el token en disco");
+    public static Gmail buildGmailService() throws IOException, GeneralSecurityException {
+        // 1. Verificar y crear directorio de tokens
+        File tokensDir = new File(TOKENS_DIRECTORY_PATH);
+        if (!tokensDir.exists()) {
+            if (!tokensDir.mkdirs()) {
+                throw new IOException("No se pudo crear el directorio para tokens");
             }
-            Files.createDirectories(tokensPath);
-            byte[] decoded = Base64.getDecoder().decode(storedCredentialBase64);
-            Files.write(credentialFile, decoded);
         }
 
+        // 2. Cargar client secrets
+        String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
+        if (secretJson == null) {
+            throw new IllegalStateException("Variable GOOGLE_CLIENT_SECRET no configurada");
+        }
+
+        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
+                new InputStreamReader(new ByteArrayInputStream(secretJson.getBytes(StandardCharsets.UTF_8))));
+
+        // 3. Configurar flujo de autorización
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(tokensPath.toFile()))
+                GoogleNetHttpTransport.newTrustedTransport(),
+                JSON_FACTORY,
+                clientSecrets,
+                Collections.singleton(GMAIL_SCOPE))
+                .setDataStoreFactory(new FileDataStoreFactory(tokensDir))
                 .setAccessType("offline")
                 .build();
 
-        Credential credential = flow.loadCredential("mg800487@gmail.com");
+        // 4. Cargar credenciales existentes
+        Credential credential = flow.loadCredential(USER_IDENTIFIER);
 
-        if (credential == null) {
-            throw new IllegalStateException("No se pudo cargar el token para el usuario");
+        if (credential == null || credential.getRefreshToken() == null) {
+            throw new IllegalStateException("No hay credenciales válidas. Autoriza primero via /api/email/Callback");
         }
 
-        return new Gmail.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, credential)
+        // 5. Construir servicio Gmail
+        return new Gmail.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                JSON_FACTORY,
+                credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+    }
+
+    public static void authorizeAndStoreCredentials(String authorizationCode) throws IOException, GeneralSecurityException {
+        // 1. Verificar y crear directorio de tokens
+        File tokensDir = new File(TOKENS_DIRECTORY_PATH);
+        if (!tokensDir.exists()) {
+            if (!tokensDir.mkdirs()) {
+                throw new IOException("No se pudo crear el directorio para tokens");
+            }
+        }
+
+        // 2. Cargar client secrets
+        String secretJson = System.getenv("GOOGLE_CLIENT_SECRET");
+        if (secretJson == null) {
+            throw new IllegalStateException("Variable GOOGLE_CLIENT_SECRET no configurada");
+        }
+
+        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
+                new InputStreamReader(new ByteArrayInputStream(secretJson.getBytes(StandardCharsets.UTF_8))));
+
+        // 3. Configurar flujo de autorización
+        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                JSON_FACTORY,
+                clientSecrets,
+                Collections.singleton(GMAIL_SCOPE))
+                .setDataStoreFactory(new FileDataStoreFactory(tokensDir))
+                .setAccessType("offline")
+                .build();
+
+        // 4. URL de redirección (debe coincidir con Google Cloud Console)
+        String redirectUri = "https://backend-ventrix-production.up.railway.app/api/email/Callback";
+
+        // 5. Intercambiar código por tokens
+        GoogleTokenResponse tokenResponse = flow.newTokenRequest(authorizationCode)
+                .setRedirectUri(redirectUri)
+                .execute();
+
+        // 6. Almacenar credenciales
+        flow.createAndStoreCredential(tokenResponse, USER_IDENTIFIER);
     }
 }

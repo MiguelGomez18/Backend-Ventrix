@@ -1,8 +1,6 @@
 package com.VenTrix.com.VenTrix.Controladores;
 
-import com.VenTrix.com.VenTrix.Entidades.Restaurante;
 import com.VenTrix.com.VenTrix.Servicios.GmailService;
-import com.VenTrix.com.VenTrix.Servicios.Usuario_Servicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +19,22 @@ public class GmailController {
     @PostMapping("/send")
     public ResponseEntity<String> enviarCorreo(@RequestBody Map<String, String> request) {
         String to = request.get("to");
-
         try {
             gmailService.sendEmail(to);
             return ResponseEntity.ok("Correo enviado con éxito!");
         } catch (Exception e) {
-            // Esto lanza el error correcto al frontend (como 404, etc.)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
+
+    @GetMapping("/Callback")
+    public ResponseEntity<String> handleGoogleCallback(@RequestParam("code") String code) {
+        try {
+            gmailService.authorizeAndStoreCredentials(code);
+            return ResponseEntity.ok("Autorización exitosa. Tokens guardados en /app/tokens");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al autorizar: " + e.getMessage());
         }
     }
 }
